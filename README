@@ -1,0 +1,99 @@
+Codes for cross-correlating a sample with CMB maps in HealPix
+
+Written by Mike DiPompeo (UWyo), 2014
+
+NOTE!:
+Expected that maps are in *NESTED* (not RING) format.  All output maps are as well.  Can use HEALPix codes ring2nest.pro and nest2ring.pro to convert if needed.
+
+
+List of procedures (in order needed to make measurement, as in xcorr_master.pro):
+
+generate_rand.pro
+------------------
+Generate a random catalog in your region of interest (defined by a mangle polygon(s)).  Used to find where survey mask components overlap HEALPix pixels.  If using high resolution map (large nside), need A LOT of points.  Should run some tests...
+
+apply_poly_mask.pro
+--------------------
+Apply the mask applied to your data to your random catalog, to determine the number of objects inside and outside mask components.  
+
+pix_area.pro
+------------
+Use results from apply_poly_mask.pro to determine actual area of each HEALPix pixel that is used, so the density calculation is correct.  Note that there are systematics that come into play depending on number of random points you start with.  Later codes have the option of only using full HEALPix pixels - I recommend this until the effects of partial pixels is better studied. 
+
+matter_power_spec.pro
+---------------------
+Generates files for the transfer function and matter power spectrum at user-specified redshifts using CAMB.  Can use combine_camb.pro to combine into a single matter power spectrum (see below).
+
+
+
+
+xcorr_master.pro
+-----------------
+After the map of pixel areas is generated from the 3 codes above, and you have the matter power spectrum at each redshift step (expected to be in steps of 0.01 from 0.01 to 4 in this master code), you can automate all of the rest using this procedure.  Calls all of the remaining codes, makes plots, etc.
+
+convergence.pro
+---------------
+Takes a planck lensing map file and makes a convergence map, as well as pulls out the mask information.  Can output files or just return the kappa and mask maps.
+
+area_to_mask.pro
+----------------
+Convert a HEALPix map of pixel areas to a binary mask (0 for unused pixels, 1 for used pixels).  Set /full flag to only include pixels that don't overlap mask components (recommended currently).  If not, will used partial pixels for density calculation.
+
+combine_masks.pro
+----------------
+Takes two binary masks (like from different surveys) and combines them into one such that only good elements in BOTH are set to 1.
+
+pix_density.pro
+---------------
+Take a sample RA and DEC list and caculate the number of objects per pixel, the density per pixel, and the relative density per pixel. Assumes that depth is uniform across the total area. 
+
+cross_corr.pro
+--------------
+Cross-correlates two HEALPix maps.  Will bin ell in 3,4, or 5 bins per dex, defaults to 5.
+
+rotate_map.pro
+--------------
+Rotate a HEALPix map by a given amount in galactic longitude.  Can also flip by 180 in galactic latitude.  Many rotations can serve as your noise maps to calculate cross-corr errors.
+
+xcorr_noise.pro
+---------------
+Cross correlates maps with several other maps (such as rotated maps from rotate_map.pro or simulated noise maps).  Writes out binned cl with each one, and an integer incrementing which map it was cross correlated with.
+
+cross_corr_errs.pro
+-------------------
+Reads output of xcorr_noise.pro, calcualates covariance matrix and 1-sigma errors.  Option to write to file.
+
+gauss_smooth_map.pro
+--------------------
+Apply Gaussian smoothing to a HEALPix map (useful for visualization).
+
+change_res.pro
+---------------
+Change the HEALPix resolution of a map and its mask. Useful to reduce resolution for plotting/stacking routines, where the high resolution is unnecessary.
+
+kappa_delta_map.pro
+--------------------
+Takes a convergence and density map and plots them on top of each other to visualize cross-correlation.  Note that the resolution needs to be reduced from nside=2048 to at least 1024 or there won't be enough memory on many machines.  Since the maps should be smoothed anyway, this doesn't matter much.  Have not tested the location of the color bar/legend well, may need tweaking.
+
+chi_list.pro
+-------------
+Build an array of z and chi values (for model power spectra). Watch your cosmology!
+
+
+combine_camb.pro
+------------
+Takes output files from CAMB (an individual one from each redshift), which have k and P(k), interpolate to a grid of ell values, and give back power spectrum as a function of k, ell, z.  Can output a fits file for use in model_cross_corr.pro. Watch your cosmology!
+
+fit_dndz.pro (used in model_cross_corr.pro)
+------------
+Take an array of z values and fit a spline to them.  Automatically writes out dndz_fit.txt, so you can check your fit.
+
+model_cross_corr.pro
+--------------------
+Build a model DM CMB cross-corr.  Requires a linear power spectrum file, a file with sample redshifts (dndz.txt; will fit a spline to get dndz with dndz_fit.pro), and an output from chi_list.pro named z_chi.txt.  Can run without any inputs, but you can set your own filenames for the above if you'd like.  Can also change the cosmology, but make sure you're consistent!!!
+
+
+fit_crosspower.pro
+------------------
+Will fit a model (like from model_cross_corr.pro provided as a text file with columns ell and cl) to cross-correlation data.  Can pass it 1-sigma errors and a covariance matrix (as a file or an array) if wanted.  Will also plot the fit (hardcopy if desired).
+
