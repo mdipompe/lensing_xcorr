@@ -10,11 +10,16 @@ List of procedures (in order needed to make measurement, as in xcorr_master.pro)
 
 generate_rand.pro
 ------------------
-Generate a random catalog in your region of interest (defined by a mangle polygon(s)).  Used to find where survey mask components overlap HEALPix pixels.  If using high resolution map (large nside), need A LOT of points.  Should run some tests...
+Generate a random catalog in your region of interest (defined by a mangle polygon(s)).  Used to find where survey mask components overlap HEALPix pixels.  If using high resolution map (large nside) and a lot of area on the sky, need A LOT of points.  In that case, might be better off using pix_area_loop.pro instead of doing the whole thing at once.
+
+pix_area_loop.pro
+-----------------
+Uses the nested nature of HEALPix to calculate the pixel areas in an iterative manner with control of the number of points per pixel used when calculating the pixel areas (on average).  Uses a lower Nside HEALPix scheme (e.g. nside=16), loops over them, ransacking each one, applies the mask, and then calculates the areas of the smaller sub-pixels that you're interested in.  Note that this can be a slow process (up to a few days to run depending on settings!).
 
 apply_poly_mask.pro
 --------------------
 Apply the mask applied to your data to your random catalog, to determine the number of objects inside and outside mask components.  
+
 
 pix_area.pro
 ------------
@@ -22,7 +27,7 @@ Use results from apply_poly_mask.pro to determine actual area of each HEALPix pi
 
 matter_power_spec.pro
 ---------------------
-Generates files for the transfer function and matter power spectrum at user-specified redshifts using CAMB.  Can use combine_camb.pro to combine into a single matter power spectrum (see below).
+Generates files for the transfer function and matter power spectrum at user-specified redshifts using CAMB.  Can use combine_camb.pro to combine into a single file (see below).
 
 
 
