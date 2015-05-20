@@ -8,9 +8,6 @@ Expected that maps are in *NESTED* (not RING) format.  All output maps are as we
 
 List of procedures (in order needed to make measurement, as in xcorr_master.pro):
 
-generate_rand.pro
-------------------
-Generate a random catalog in your region of interest (defined by a mangle polygon(s)).  Used to find where survey mask components overlap HEALPix pixels.  If using high resolution map (large nside) and a lot of area on the sky, need A LOT of points.  In that case, might be better off using pix_area_loop.pro instead of doing the whole thing at once.
 
 pix_area_loop.pro
 -----------------
