@@ -57,9 +57,9 @@ ENDFOR
 
 IF keyword_set(root) THEN BEGIN
    openw,1,root+'_covar.txt'
-   formatstring=strarr(nbins)+'D,1x,'
-   formatstring[0]='(D,1x,'
-   formatstring[n_elements(formatstring)-1]='D)'
+   formatstring=strarr(nbins)+'E,1x,'
+   formatstring[0]='(E,1x,'
+   formatstring[n_elements(formatstring)-1]='E)'
    formatstring=strjoin(formatstring)
    FOR i=0,nbins-1 DO BEGIN
       printf,1,C[i,*],format=formatstring
