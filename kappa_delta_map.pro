@@ -85,7 +85,7 @@ PS_start,filename=imout,/encapsul,xsize=17,ysize=13
 ;MAD Plot colored contours (kappa)
 contour,map1,ra,dec,/irregular,$
     c_linestyle=0,/fill,nlevels=n_levels,c_colors=cols,$
-    max_value=max(map1),min_value=min(map2),$
+    max_value=max(map1),min_value=min(map1),$
     xtit='RA',ytit='DEC',xra=[lra-1.,ura+1.],yra=[ldec-1,udec+6.],xsty=1,ysty=1,color=cgcolor('black'),$
     thick=2,xthick=6,ythick=6,charthick=3,xcharsize=2.,ycharsize=2.,position=[0.13,0.13,0.95,0.95]
 
@@ -97,8 +97,8 @@ contour,map2[where(map2 GE split)],ra[where(map2 GE split)],dec[where(map2 GE sp
         c_linestyle=0,/overplot,thick=3,$
         levels=[0,0.1,0.2,0.3,0.4,0.5]
 
-;MAD Plot over bad data to make it white
-oplot,ra[where(mask EQ 0)],dec[where(mask EQ 0)],psym=8,color=cgcolor('white'),symsize=0.2
+;;MAD Plot over bad data to make it white
+;oplot,ra[where(mask EQ 0)],dec[where(mask EQ 0)],psym=8,color=cgcolor('white'),symsize=0.2
 
 ;MAD Plot delta legend
 loadct,0
