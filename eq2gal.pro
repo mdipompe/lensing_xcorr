@@ -44,6 +44,7 @@ ang2pix_nest,nside,newtheta,newphi,newpix
 match2,pix,newpix,pixm,newpixm
 newmap=map[newpixm]
 
+
 ;MAD Plot new map (if plot set)
 IF keyword_set(plot) THEN mollview,newmap,/nest,title='New map'
 
