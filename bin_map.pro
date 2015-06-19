@@ -138,8 +138,6 @@ ENDWHILE
 ;MAD Calculate mean from total and n
 binned_vals=binned_tot*(1./n)
 
-stop
-
 ;MAD Write out file, if needed
 IF keyword_set(outfile) THEN BEGIN
    openw,1,outfile
