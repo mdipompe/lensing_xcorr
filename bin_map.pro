@@ -5,14 +5,14 @@
 ;    Get the mean value of a HEALPix map in annuli around some set of points
 ;
 ;  USE:
-;    bin_map,map,data,bincents,binned_vals,mask=mask,coords='G',bins=bins,region=region,outfile='out.txt',/loop
+;    bin_map,map,data,bincents,binned_vals,mask=mask,coords='G',binedges=binedges,region=region,outfile='out.txt',/loop
 ;
 ;  INPUT:
 ;    map - HEALPix map to bin
 ;    data - structure of data to bin around (tags ra/dec or l/b)
 ;
 ;  OPTIONAL INPUT:
-;    bins - array of bin edges (in arcmin).  Defaults to 10' bins from 0 to 3 degrees
+;    binedges - array of bin edges (in arcmin).  Defaults to 10' bins from 0 to 3 degrees
 ;    outfile - string name of text file to write bincents and
 ;              binned_vals to
 ;    mask - binary map of useable pixels in map
@@ -40,8 +40,11 @@
 ;
 ;  HISTORY:
 ;    6-15-15 - Written - MAD (UWyo)
+;    7-10-15 - Improved speed, especially for large datasets - MAD (UWyo)
 ;-
-PRO bin_map,map,data,bincents,binned_vals,mask=mask,coords=coords,bins=bins,region=region,outfile=outfile,loop=loop
+PRO bin_map,map,data,bincents,binned_vals,mask=mask,coords=coords,binedges=binedges,region=region,outfile=outfile,loop=loop
+
+st=code_timer()
 
 ;MAD Set default coordinates
 IF ~keyword_set(coords) THEN coords='Q'
@@ -61,7 +64,14 @@ pixnums=lindgen(n_elements(map))
 ;MAD Get pixel center coordinates
 healpix_coords,nside,pix_l,pix_b
 
-;MAD Limit pixels to region
+;MAD Get pixel information of data
+phi=data_l*(!dpi/180.)
+theta=(90-data_b)*(!dpi/180.)
+ang2pix_nest,nside,theta,phi,ipix
+;Count number of data points in each pixel
+h=histogram(ipix,bin=1,min=0,max=max(pixnums))
+
+;MAD Limit pixels to region of interest
 IF keyword_set(region) THEN BEGIN
    euler,pix_l,pix_b,pix_ra,pix_dec,2
    in=is_in_window(ra=pix_ra,dec=pix_dec,region)
@@ -78,43 +88,42 @@ ENDIF ELSE IF (~keyword_set(mask) AND ~keyword_set(region)) THEN BEGIN
    cnt=0
 ENDIF
 newmap=map
-IF (cnt NE 0) THEN remove,masked,pixnums,newmap,pix_l,pix_b
+IF (cnt NE 0) THEN remove,masked,pixnums,newmap,pix_l,pix_b,h
+
+;MAD Identify pixels with data points in them
+data_pix=where(h GT 0)
 
 ;MAD Set default bin edges
 IF ~keyword_set(binedges) THEN binedges=findgen((6.*3.)+1)*10.
 ;MAD Generate bin centers
+IF keyword_set(bincents) THEN undefine,bincents
 FOR i=0L,n_elements(binedges)-2 DO BEGIN
    val=binedges[i]+((binedges[i+1]-binedges[i])/2.)
    IF (n_elements(bincents) EQ 0) THEN bincents=val ELSE bincents=[bincents,val]
 ENDFOR
 
-;MAD Locate pixels within max bin size, find total map value in annuli
-;while also counting number of pixels matched in each for mean calculation
+
+;MAD Initialize some arrays to fill
+total_vals=dblarr(n_elements(bincents))
+num=dblarr(n_elements(bincents))
+binned_vals=dblarr(n_elements(bincents))
 k=0L
-;MAD Set step size for loop, or just make one big step if /loop not set
+;MAD Loop over chunks (if \loop set)
 IF keyword_set(loop) THEN step=10000. ELSE step=n_elements(pix_l)
-;MAD n will be the number of pixels in each bin
-n=dblarr(n_elements(bincents))
-binned_tot=dblarr(n_elements(bincents))
 WHILE (k LT n_elements(pix_l)) DO BEGIN
    IF keyword_set(loop) THEN counter,k,n_elements(pix_l)
    tempindx=lindgen(step)+(k)
-   spherematch,data_l,data_b,pix_l[tempindx],pix_b[tempindx],max(binedges/60.),m1,m2,sep,maxmatch=0
+   spherematch,pix_l[data_pix],pix_b[data_pix],pix_l[tempindx],pix_b[tempindx],max(binedges/60.),m1,m2,sep,maxmatch=0
    IF (m1[0] NE -1) THEN BEGIN
       FOR i=0L,n_elements(binedges)-2 DO BEGIN
          xx=where(sep GE binedges[i]/60. AND sep LT binedges[i+1]/60.,cnt)
          IF (cnt NE 0) THEN BEGIN
-            n[i]=n[i]+n_elements(xx)
-            IF (i EQ 0) THEN binned_step=total(newmap[tempindx[m2[xx]]]) ELSE $
-               binned_step=[binned_step,total(newmap[tempindx[m2[xx]]])]
-         ENDIF ELSE BEGIN
-            IF (i EQ 0) THEN binned_step=0. ELSE $
-               binned_step=[binned_step,0.]
-         ENDELSE
+            uniqpix=data_pix[rem_dup(data_pix[m1[xx]])]
+            num[i]=num[i]+(n_elements(where(m1[xx] EQ m1[0]))*total(h[uniqpix]))
+            total_vals[i]=total_vals[i]+total(newmap[tempindx[m2[xx]]])
+         ENDIF
       ENDFOR
-      binned_tot=binned_tot+binned_step
    ENDIF
-   
    k=k+step
    IF (k+10000 LT n_elements(pix_l)) THEN BEGIN
       step=10000
@@ -133,10 +142,12 @@ WHILE (k LT n_elements(pix_l)) DO BEGIN
          ENDELSE
       ENDELSE
    ENDELSE
-ENDWHILE   
+ENDWHILE
 
-;MAD Calculate mean from total and n
-binned_vals=binned_tot*(1./n)
+;MAD Find which annuli had pixels matched
+use=where(total_vals NE 0)
+;MAD Calculate mean per annuli
+binned_vals[use]=total_vals[use]*(1./num[use])
 
 ;MAD Write out file, if needed
 IF keyword_set(outfile) THEN BEGIN
@@ -146,6 +157,8 @@ IF keyword_set(outfile) THEN BEGIN
    ENDFOR
    close,1
 ENDIF
+
+et=timer(st=st,/fin,unit='h')
 
 return
 END
