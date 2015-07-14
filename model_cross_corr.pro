@@ -87,7 +87,9 @@ readcol,zsample,z,chi,format='D'
 readcol,dndz,zdist,format='D'
 
 ;MAD Get comoving distance to CMB
-d_cmb=cosmo_gen('c',omega_m,omega_l,h0,1100.)
+;d_cmb=cosmo_gen('c',omega_m,omega_l,h0,1100.)
+d_cmb=cosmocalc(1100.,om=omega_m,lambda=omega_l,h=h0)
+d_cmb=d_cmb.d_c
 
 ;MAD Get array of k, l values
 kvals=pkk[where(pkz EQ min(pkz))]
