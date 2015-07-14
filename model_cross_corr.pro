@@ -16,8 +16,8 @@
 ;                 containing the matter power
 ;                 spectrum.  Needs tags pk (the power spectrum), k
 ;                 (wavenumber), l (angular wavenumber), z (redshift).
-;                 Can be made from CAMB data using
-;                 camb_power_spec.pro. Defaults to 'power_spec_camb.fits'
+;                 Can be made from CAMB data using camb4idl and
+;                 combine_camb.pro. Defaults to 'power_spec_camb.fits'
 ;    dndz - string name of text file with dndz.  Will fit a spline
 ;           function and write it out to dndz_fit.txt.  You should
 ;           check this!!  Defaults to dndz.txt

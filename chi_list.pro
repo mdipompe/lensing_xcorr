@@ -45,7 +45,12 @@ z=(findgen(maxz/zstep)/(1./zstep))+zstep
 IF (max(z) LT maxz) THEN z=[z,max(z)+zstep]
 
 ;MAD Call cosmology calculator to get chi for each z
-chi=cosmo_gen('c',omega_m,omega_l,h0,z)
+;chi=cosmo_gen('c',omega_m,omega_l,h0,z)  ;Old and slower (but slightly more accurate...)
+chi=fltarr(n_elements(z))
+FOR i=0L,n_elements(z)-1 DO BEGIN
+   d=cosmocalc(z[i],h=h0,om=omega_m,lambda=omega_l)
+   chi[i]=d.d_c
+ENDFOR
 
 ;MAD Write file if needed
 IF keyword_set(outfile) THEN BEGIN
