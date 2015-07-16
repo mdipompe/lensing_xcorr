@@ -14,8 +14,6 @@
 ;    data_file - file containing data, with ra and dec tags (in
 ;                equatorial coordinates)
 ;    sim_loc - path to simulated or rotated maps (with trailing /)
-;    p_mat_loc - path to location of list of power spectra for each z
-;                (probably from CAMB)
 ;
 ;  OPTIONAL INPUT:
 ;    binning - integer value of bins per dex (3, 4, or 5).  Defaults
@@ -26,6 +24,7 @@
 ;           array of dec range
 ;    h0 - little h.  Defaults to 0.702
 ;    omega_m - Omega_matter.  Defaults to 0.273
+;    omega_b - Omega baryon.  Defaults to 0.046
 ;    omega_l - Omega_lambda.  Defaults to 0.727
 ;    min_ell - minimum ell to fit the bias (Defaults to 10)
 ;    max_ell - maximum ell to fit the bias (Defaults to 1000)
@@ -37,11 +36,11 @@
 ;
 ;  OUTPUT:
 ;    
-;
 ;  HISTORY:
 ;    11-16-14 - Written - MAD (UWyo)
+;     7-16-15 - Modified to use CAMB4IDL - MAD (UWyo)
 ;-
-PRO xcorr_master,planckfile,areafile,datafile,sim_loc,p_mat_loc,usepartial=usepartial,binning=binning,plots=plots,ras=ras,decs=decs,h0=h0,omega_m=omega_m,omega_l=omega_l,min_ell=min_ell,max_ell=max_ell
+PRO xcorr_master,planckfile,areafile,datafile,sim_loc,usepartial=usepartial,binning=binning,plots=plots,ras=ras,decs=decs,h0=h0,omega_m=omega_m,omega_b=omega_b,omega_l=omega_l,min_ell=min_ell,max_ell=max_ell
 
 ;MAD Set start time
 st=systime(1)
@@ -132,9 +131,18 @@ ENDIF
 ;MAD Generate array of chi_values
 chi_list,4.,z,chi,h0=h0,omega_m=omega_m,omega_l=omega_l,outfile='z_chi.txt'
 
+;MAD Get matter power at each redshift
+revz=reverse(z)
+z1=revz[0:149]
+z2=revz[150:299]
+z3=revz[300:399]
+matter_power_spec,'default_params.ini',z1,h0=h0,omega_b=omega_b,omega_dm=omega_m-omega_b,omega_l=omega_l
+matter_power_spec,'default_params.ini',z2,h0=h0,omega_b=omega_b,omega_dm=omega_m-omega_b,omega_l=omega_l
+matter_power_spec,'default_params.ini',z3,h0=h0,omega_b=omega_b,omega_dm=omega_m-omega_b,omega_l=omega_l
+
 ;MAD Take model cosmology and make a function of ell, k, z
 chi=chi*h0
-combine_camb,p_mat_loc,z,chi,pkmatter,outfile='matter_power.fits'
+combine_camb,'./',z,chi,pkmatter,outfile='matter_power.fits'
 
 ;MAD Build model cross-corr
 model_cross_corr,mod_ell,mod_cl,power_spec=pkmatter,omega_m=omega_m,omega_l=omega_l,h0=h0,$

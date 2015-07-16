@@ -5,6 +5,8 @@ Written by Mike DiPompeo (UWyo), 2014
 NOTE!:
 Expected that maps are in *NESTED* (not RING) format.  All output maps are as well.  Can use HEALPix codes ring2nest.pro and nest2ring.pro to convert if needed.
 
+You should setup 'default_params.ini' file for the matter power spectrum from CAMB (cosmology will be set properly automatically, but other defaults may be changed).
+
 
 List of procedures (in order needed to make measurement, as in xcorr_master.pro):
 
@@ -22,16 +24,13 @@ pix_area.pro
 ------------
 Use results from apply_poly_mask.pro to determine actual area of each HEALPix pixel that is used, so the density calculation is correct.  Note that there are systematics that come into play depending on number of random points you start with.  Later codes have the option of only using full HEALPix pixels - I recommend this until the effects of partial pixels is better studied. 
 
-matter_power_spec.pro
----------------------
-Generates files for the transfer function and matter power spectrum at user-specified redshifts using CAMB.  Can use combine_camb.pro to combine into a single file (see below).
 
 
 
 
 xcorr_master.pro
 -----------------
-After the map of pixel areas is generated from the 3 codes above, and you have the matter power spectrum at each redshift step (expected to be in steps of 0.01 from 0.01 to 4 in this master code), you can automate all of the rest using this procedure.  Calls all of the remaining codes, makes plots, etc.
+After the map of pixel areas is generated from the 3 codes above, you can automate all of the rest using this procedure.  Calls all of the remaining codes, makes plots, etc.  Note that the plotting isn't well tested outside of an initial region, but the code is.
 
 convergence.pro
 ---------------
@@ -81,6 +80,9 @@ chi_list.pro
 -------------
 Build an array of z and chi values (for model power spectra). Watch your cosmology!
 
+matter_power_spec.pro
+---------------------
+Will use CAMB to calculate the matter power spectrum at many redshifts.  CAMB can only handle 150 at a time, so you'll have to break up your runs.  Relies on CAMB4IDL (available on my GitHub page).
 
 combine_camb.pro
 ------------
