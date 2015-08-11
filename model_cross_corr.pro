@@ -101,10 +101,10 @@ fit_dndz,zdist,z,dndz
 
 ;MAD Do the integral part of C_l
 c_l=fltarr(n_elements(lvals))
-FOR i=0L,n_elements(z)-1 DO BEGIN
- xx=where(round(pkz*100.)/100. EQ round(z[i]*100.)/100.)
- val=((d_cmb[0]-chi[i])/(d_cmb[0]))*((1.+z[i])/chi[i])*dndz[i]*pk[xx]*(z[1]-z[0])
- c_l=c_l+val
+FOR i=0L,n_elements(c_l)-1 DO Begin
+   xx=where(pkl EQ lvals[i])
+   fz=((d_cmb[0]-chi)/(d_cmb[0]))*((1.+z)/chi)*dndz*pk[xx]
+   c_l[i]=int_tabulated(z,fz,/double)
 ENDFOR
 
 ;MAD Multiply in all the constants
