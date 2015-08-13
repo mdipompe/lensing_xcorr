@@ -142,7 +142,7 @@ matter_power_spec,'default_params.ini',z3,h0=h0,omega_b=omega_b,omega_dm=omega_m
 
 ;MAD Take model cosmology and make a function of ell, k, z
 chi=chi*h0
-combine_camb,'./',z,chi,pkmatter,outfile='matter_power.fits'
+combine_camb,'./',z,pkmatter,maxell=3000,chiin=chi,outfile='matter_power.fits'
 
 ;MAD Build model cross-corr
 model_cross_corr,mod_ell,mod_cl,power_spec=pkmatter,omega_m=omega_m,omega_l=omega_l,h0=h0,$
