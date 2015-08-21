@@ -8,8 +8,9 @@
 ;   xcorr_master,'planck_file','area_file','data_file'
 ;
 ;  INPUT:
-;    planck_file - string name of file from planck containing lensing
-;                  map in zero extension and mask in first extension
+;    planck_file - string name of file from planck containing kappa
+;                  map.
+;    planck_mask - string name of file with planck mask.
 ;    area_file - HEALPix map of pixel areas (from pix_area.pro)
 ;    data_file - file containing data, with ra and dec tags (in
 ;                equatorial coordinates)
@@ -39,8 +40,11 @@
 ;  HISTORY:
 ;    11-16-14 - Written - MAD (UWyo)
 ;     7-16-15 - Modified to use CAMB4IDL - MAD (UWyo)
+;     8-21-15 - Simplified model generation - MAD (UWyo)
 ;-
-PRO xcorr_master,planckfile,areafile,datafile,sim_loc,usepartial=usepartial,binning=binning,plots=plots,ras=ras,decs=decs,h0=h0,omega_m=omega_m,omega_b=omega_b,omega_l=omega_l,min_ell=min_ell,max_ell=max_ell
+PRO xcorr_master,planck_file,planck_mask,areafile,datafile,sim_loc,usepartial=usepartial,$
+                 binning=binning,plots=plots,ras=ras,decs=decs,h0=h0,omega_m=omega_m,$
+                 omega_b=omega_b,omega_l=omega_l,min_ell=min_ell,max_ell=max_ell
 
 ;MAD Set start time
 st=systime(1)
@@ -57,8 +61,9 @@ IF ~keyword_set(omega_l) THEN omega_l=0.727
 ;MAD Start calculating cross-power
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;MAD Convert planck lensing file to kappa map and mask
-convergence,planckfile,kappa,planckmask,outroot='planck'
+;MAD Read in planck data
+read_fits_map,planck_file,kappa
+read_fits_map,planck_mask,planckmask
 
 ;MAD Read in area file, build mask
 read_fits_map,areafile,mapareas
@@ -126,29 +131,15 @@ IF keyword_set(plots) THEN BEGIN
 ENDIF
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;MAD Start making model cross-power
+;MAD Generate model cross power
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;MAD Generate array of chi_values
-chi_list,4.,z,chi,h0=h0,omega_m=omega_m,omega_l=omega_l,outfile='z_chi.txt'
-
-;MAD Get matter power at each redshift
-revz=reverse(z)
-z1=revz[0:149]
-z2=revz[150:299]
-z3=revz[300:399]
-matter_power_spec,'default_params.ini',z1,h0=h0,omega_b=omega_b,omega_dm=omega_m-omega_b,omega_l=omega_l
-matter_power_spec,'default_params.ini',z2,h0=h0,omega_b=omega_b,omega_dm=omega_m-omega_b,omega_l=omega_l
-matter_power_spec,'default_params.ini',z3,h0=h0,omega_b=omega_b,omega_dm=omega_m-omega_b,omega_l=omega_l
-
-;MAD Take model cosmology and make a function of ell, k, z
-chi=chi*h0
-combine_camb,'./',z,pkmatter,maxell=3000,chiin=chi,outfile='matter_power.fits'
-
-;MAD Build model cross-corr
-model_cross_corr,mod_ell,mod_cl,power_spec=pkmatter,omega_m=omega_m,omega_l=omega_l,h0=h0,$
+model_cross_corr,mod_ell,mod_cl,omega_m=omega_m,omega_l=omega_l,h0=h0,omega_b=omega_b,$
                  outfile='model_power.txt',plotfile='model_power.png'
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;MAD Fit cross-power, get bias
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 IF ~keyword_set(min_ell) THEN min_ell=10.
 IF ~keyword_set(max_ell) THEN max_ell=1000.
 fit_crosspower,cl,ell,min_ell,max_ell,mod_ell,mod_cl,bias,biaserr,err=errs,covar=covarmatrix,plotout='bias_fit.png'

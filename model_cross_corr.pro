@@ -5,9 +5,9 @@
 ;    Generate a model DM cross-power spectrum (bias=1)
 ;
 ;  USE:
-;    model_cross_corr,mod_ell,mod_cl,power_spec='power_spec.fits',dndz='dndz.txt',zarray='z_chi.txt',$
-;                      omega_m=omega_m,omega_l=omega_l,h0=h0,$
-;                      outfile='model_power.txt'
+;    model_cross_corr,mod_ell,mod_cl,power_spec='power_spec.fits',dndz='dndz.txt',zarray=zarray,$
+;                      omega_m=omega_m,omega_b=omega_b,omega_l=omega_l,h0=h0,$
+;                      outfile='model_power.txt',paramfile='params.ini'
 ;
 ;  INPUT:
 ;
@@ -18,16 +18,21 @@
 ;                 (wavenumber), l (angular wavenumber), z (redshift).
 ;                 Can be made from CAMB data using camb4idl and
 ;                 combine_camb.pro. Defaults to 'power_spec_camb.fits'
+;                 If not set, will call necessary procedures to make
+;                 it.
+;    paramfile - if power_spec not set, need param file for CAMB.
+;                Defaults to 'default_params.ini'
 ;    dndz - string name of text file with dndz.  Will fit a spline
 ;           function and write it out to dndz_fit.txt.  You should
 ;           check this!!  Defaults to dndz.txt
-;    zsample - string name of file containing z and chi values, as
-;              made by chi_list.pro.  Defaults to z_chi.txt
+;    zarray - array of z values power spectrum and dndz are calculated
+;             for. If not set, defaults to 0.01 to 4.0 in steps of 0.01
 ;    omega_m - Omega_matter, defaults to 0.273.  Be sure it is
 ;              consistent with what you used when you calculated the
-;              power spectrum!
+;              power spectrum if you supply one!
 ;    omega_l - Omega_lambda, defaults to 0.727.  See above...
 ;    h0 - little h (H0/100), defaults to 0.702.  See above...
+;    omega_b - omega_baryon, defaults to 0.046
 ;    outfile - if supplied, writes model power out to text file
 ;    plotfile - if supplied, makes a plot of the model
 ;
@@ -45,8 +50,12 @@
 ;
 ;  HISTORY:
 ;    11-7-14 - Written - MAD (UWyo)
+;    8-21-15 - If power spec not supplied, calls CAMB4IDL to get it - MAD (UWyo)
 ;-
-PRO model_cross_corr,mod_ell,mod_cl,power_spec=power_spec,dndz=dndz,zsample=zsample,omega_m=omega_m,omega_l=omega_l,h0=h0,outfile=outfile,plotfile=plotfile
+PRO model_cross_corr,mod_ell,mod_cl,power_spec=power_spec,dndz=dndz,zarray=zarray,$
+                     paramfile=paramfile,$
+                     omega_m=omega_m,omega_b=omega_b,omega_l=omega_l,h0=h0,$
+                     outfile=outfile,plotfile=plotfile
 
 ;MAD If output file already exists, don't run just read it in
 IF ~keyword_set(outfile) THEN check='' ELSE check=file_search(outfile)
@@ -57,20 +66,51 @@ IF (check NE '') THEN BEGIN
 ENDIF
 
 ;MAD Set some defaults
-IF ~keyword_set(power_spec) THEN power_spec='power_spec_camb.fits'
+;IF ~keyword_set(power_spec) THEN power_spec='power_spec_camb.fits'
 IF ~keyword_set(dndz) THEN dndz='dndz.txt'
-IF ~keyword_set(zsample) THEN zsample='z_chi.txt'
+;IF ~keyword_set(zsample) THEN zsample='z_chi.txt'
+IF ~keyword_set(zarray) THEN zarray=(findgen(400)/100.)+0.01
+IF ~keyword_set(paramfile) THEN paramfile='default_params.ini'
 
 IF ~keyword_set(h0) THEN h0=0.702
 IF ~keyword_set(omega_m) THEN omega_m=0.273
+IF ~keyword_set(omega_b) THEN omega_b=0.046
 IF ~keyword_set(omega_l) THEN omega_l=0.727
 
-;MAD Read in power spectrum if given file name instead of structure
-check=size(power_spec)
-IF ((check[0] EQ 0) AND (check[1] EQ 7)) THEN $
-   pspec=mrdfits(power_spec,1) ELSE $
-      pspec=power_spec
+;;MAD Read in comoving distances 
+;readcol,zsample,z,chi,format='D'
+;MAD Convert z array to comoving distance array
+chi=fltarr(n_elements(zarray))
+FOR i=0L,n_elements(zarray)-1 DO BEGIN
+   d=cosmocalc(zarray[i],h=h0,om=omega_m,lambda=omega_l)
+   chi[i]=d.d_c
+ENDFOR
 
+IF ~keyword_set(power_spec) THEN BEGIN
+   root='camb'
+   revz=reverse(zarray)
+   numloop=floor((n_elements(revz)/150))
+   IF (numloop NE 0) THEN BEGIN
+      numrem=(n_elements(revz) MOD 150)
+      FOR i=0L,numloop-1 DO BEGIN
+         indx=indgen(150)+(i*150)
+         matter_power_spec,paramfile,zarray[indx],h0=h0,omega_b=0.046,omega_dm=omega_m-omega_b,omega_l=omega_l
+      ENDFOR
+      IF (numrem NE 0) THEN BEGIN
+         matter_power_spec,paramfile,zarray[(n_elements(zarray)-numrem):n_elements(zarray)-1],$
+                           h0=h0,omega_b=omega_b,omega_dm=omega_m-omega_b,omega_l=omega_l
+      ENDIF
+   ENDIF ELSE BEGIN
+      matter_power_spec,paramfile,zarray,h0=h0,omega_b=0.046,omega_dm=omega_m-omega_b,omega_l=omega_l
+   ENDELSE
+   combine_camb,'./',zarray,pspec,outfile='power_spec_camb.fits',maxell=3000.,chiin=chi*h0
+ENDIF ELSE BEGIN
+;MAD Read in power spectrum if given file name instead of structure
+   check=size(power_spec)
+   IF ((check[0] EQ 0) AND (check[1] EQ 7)) THEN $
+      pspec=mrdfits(power_spec,1) ELSE $
+         pspec=power_spec
+ENDELSE
 
 ;Put h factors in power spectrum
 delsq=pspec.pk*(1./(2.*!dpi^2.))*pspec.k^3.
@@ -80,8 +120,6 @@ pkz=pspec.z
 pk=delsq*(2.*!dpi^2.)/(pkk^3.)
 undefine,pspec
 
-;MAD Read in comoving distances 
-readcol,zsample,z,chi,format='D'
 
 ;MAD Read in redshift distributions
 readcol,dndz,zdist,format='D'
@@ -96,15 +134,14 @@ kvals=pkk[where(pkz EQ min(pkz))]
 lvals=pkl[where(pkz EQ min(pkz))]
 
 ;MAD Fit z values to get dndz
-fit_dndz,zdist,z,dndz
-
+fit_dndz,zdist,zarray,dndz
 
 ;MAD Do the integral part of C_l
 c_l=fltarr(n_elements(lvals))
 FOR i=0L,n_elements(c_l)-1 DO Begin
    xx=where(pkl EQ lvals[i])
-   fz=((d_cmb[0]-chi)/(d_cmb[0]))*((1.+z)/chi)*dndz*pk[xx]
-   c_l[i]=int_tabulated(z,fz,/double)
+   fz=((d_cmb[0]-chi)/(d_cmb[0]))*((1.+zarray)/chi)*dndz*pk[xx]
+   c_l[i]=int_tabulated(zarray,fz,/double)
 ENDFOR
 
 ;MAD Multiply in all the constants

@@ -22,10 +22,9 @@
 ;  HISTORY:
 ;    11-7-14 - Written - MAD (UWyo)
 ;-
-
 PRO fit_dndz,realz,sampledz,dndz,binsize=binsize
 
-;MAD Set default binsize
+;MAD Set defaults
 IF ~keyword_set(binsize) THEN binsize=0.2
 
 ;MAD Bin the real data

@@ -54,6 +54,7 @@ ENDIF
 
 ;MAD interpolate to ell, if needed
 IF keyword_set(maxell) THEN BEGIN
+   lvals=findgen(maxell)+1
    FOR i=0L,n_elements(files)-1 DO BEGIN
       readcol,files[i],tempk,tempp,format='D',/silent
       kvals=lvals*(1./chiin[i])
@@ -79,13 +80,12 @@ ENDIF ELSE BEGIN
       IF (n_elements(pk) EQ 0) THEN pk=pktmp ELSE pk=[pk,pktmp]
       IF (n_elements(zout) EQ 0) THEN zout=tempz ELSE zout=[zout,tempz]
    ENDFOR
+   outstruct={k:0., z:0., pk:0.}
+   outstruct=replicate(outstruct,n_elements(k))
+   outstruct.k=k
+   outstruct.z=zout
+   outstruct.pk=pk
 ENDELSE
-
-outstruct={k:0., z:0., pk:0.}
-outstruct=replicate(outstruct,n_elements(k))
-outstruct.k=k
-outstruct.z=zout
-outstruct.pk=pk
 
 IF keyword_set(outfile) THEN mwrfits,outstruct,outfile,/create
 

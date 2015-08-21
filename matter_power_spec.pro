@@ -29,6 +29,7 @@
 ;    omega_b - baryon fraction (default 0.046)
 ;    omega_dm - CDM fraction (default 0.229)
 ;    omega_l - lambda (default 0.725)
+;    maxk - max wavenumber to run to (defaults to CAMB default of 2)
 ;
 ;  OUTPUT:
 ;    CAMB parameter files and CAMB output
@@ -37,13 +38,15 @@
 ;    5-20-15 - Written - MAD (UWyo)
 ;    7-16-15 - Modified to use CAMB4IDL - MAD (UWyo)
 ;-
-PRO matter_power_spec,paramfile,zarray,h0=h0,omega_b=omega_b,omega_dm=omega_dm,omega_l=omega_l
+PRO matter_power_spec,paramfile,zarray,h0=h0,omega_b=omega_b,omega_dm=omega_dm,omega_l=omega_l,maxk=maxk
 
 ;MAD Set default cosmology
 IF ~keyword_set(h0) THEN h0=0.702
 IF ~keyword_set(omega_b) THEN omega_b=0.046
 IF ~keyword_set(omega_dm) THEN omega_dm=0.725
 IF ~keyword_set(omega_l) THEN omega_l=0.725
+
+IF ~keyword_set(maxk) THEN maxk=2
 
 ;MAD Reverse zs if needed
 IF (zarray[n_elements(zarray)-1] GT zarray[0]) THEN $
@@ -67,6 +70,7 @@ ENDFOR
 res=camb4idl(/runcamb, paramfile=paramfile,output_root='camb', $
              get_scalar='T',get_transfer='T', $
              get_tensor='F',do_lensing='T', $
+             transfer_kmax=kmax, $
              transfer_num_redshifts=n_elements(revz), $
              transfer_redshift=revz, $
              transfer_filename=tfile, transfer_matterpower=mpfile, $
