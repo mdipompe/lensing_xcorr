@@ -70,7 +70,7 @@ ENDFOR
 res=camb4idl(/runcamb, paramfile=paramfile,output_root='camb', $
              get_scalar='T',get_transfer='T', $
              get_tensor='F',do_lensing='T', $
-             transfer_kmax=kmax, $
+             transfer_kmax=maxk, $
              transfer_num_redshifts=n_elements(revz), $
              transfer_redshift=revz, $
              transfer_filename=tfile, transfer_matterpower=mpfile, $
