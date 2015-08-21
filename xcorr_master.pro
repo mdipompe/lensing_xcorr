@@ -54,8 +54,8 @@ IF ~keyword_set(binning) THEN binning=5
 
 ;MAD Set default cosmology
 IF ~keyword_set(h0) THEN h0=0.702
-IF ~keyword_set(omega_m) THEN omega_m=0.273
-IF ~keyword_set(omega_l) THEN omega_l=0.727
+IF ~keyword_set(omega_m) THEN omega_m=0.275
+IF ~keyword_set(omega_l) THEN omega_l=0.725
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;MAD Start calculating cross-power

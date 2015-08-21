@@ -43,7 +43,7 @@ PRO matter_power_spec,paramfile,zarray,h0=h0,omega_b=omega_b,omega_dm=omega_dm,o
 ;MAD Set default cosmology
 IF ~keyword_set(h0) THEN h0=0.702
 IF ~keyword_set(omega_b) THEN omega_b=0.046
-IF ~keyword_set(omega_dm) THEN omega_dm=0.725
+IF ~keyword_set(omega_dm) THEN omega_dm=0.225
 IF ~keyword_set(omega_l) THEN omega_l=0.725
 
 IF ~keyword_set(maxk) THEN maxk=2

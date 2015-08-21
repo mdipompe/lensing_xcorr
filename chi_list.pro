@@ -35,8 +35,8 @@ IF (check NE '') THEN BEGIN
 ENDIF
 
 ;MAD Set defaults
-IF ~keyword_set(omega_m) THEN omega_m=0.273
-IF ~keyword_set(omega_l) THEN omega_l=0.727
+IF ~keyword_set(omega_m) THEN omega_m=0.275
+IF ~keyword_set(omega_l) THEN omega_l=0.725
 IF ~keyword_set(h0) THEN h0=0.702
 IF ~keyword_set(zstep) THEN zstep=0.01
 

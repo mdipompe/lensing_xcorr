@@ -71,9 +71,9 @@ IF ~keyword_set(paramfile) THEN paramfile='default_params.ini'
 
 c=2.99792458e5
 IF ~keyword_set(h0) THEN h0=0.702
-IF ~keyword_set(omega_m) THEN omega_m=0.273
+IF ~keyword_set(omega_m) THEN omega_m=0.275
 IF ~keyword_set(omega_b) THEN omega_b=0.046
-IF ~keyword_set(omega_l) THEN omega_l=0.727
+IF ~keyword_set(omega_l) THEN omega_l=0.725
 
 ;MAD Convert z array to comoving distance array
 chi=fltarr(n_elements(zarray))
@@ -81,6 +81,8 @@ FOR i=0L,n_elements(zarray)-1 DO BEGIN
    d=cosmocalc(zarray[i],h=h0,om=omega_m,lambda=omega_l)
    chi[i]=d.d_c
 ENDFOR
+;chi=cosmo_gen('c',omega_m,omega_l,h0,zarray) 
+
 
 IF ~keyword_set(power_spec) THEN BEGIN
    root='camb'
