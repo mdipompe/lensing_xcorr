@@ -17,9 +17,8 @@
 ;                 spectrum.  Needs tags pk (the power spectrum), k
 ;                 (wavenumber), l (angular wavenumber), z (redshift).
 ;                 Can be made from CAMB data using camb4idl and
-;                 combine_camb.pro. Defaults to 'power_spec_camb.fits'
-;                 If not set, will call necessary procedures to make
-;                 it.
+;                 combine_camb.pro. If not set, will call necessary 
+;                 procedures to make it.
 ;    paramfile - if power_spec not set, need param file for CAMB.
 ;                Defaults to 'default_params.ini'
 ;    dndz - string name of text file with dndz.  Will fit a spline
@@ -66,19 +65,16 @@ IF (check NE '') THEN BEGIN
 ENDIF
 
 ;MAD Set some defaults
-;IF ~keyword_set(power_spec) THEN power_spec='power_spec_camb.fits'
 IF ~keyword_set(dndz) THEN dndz='dndz.txt'
-;IF ~keyword_set(zsample) THEN zsample='z_chi.txt'
 IF ~keyword_set(zarray) THEN zarray=(findgen(400)/100.)+0.01
 IF ~keyword_set(paramfile) THEN paramfile='default_params.ini'
 
+c=2.99792458e5
 IF ~keyword_set(h0) THEN h0=0.702
 IF ~keyword_set(omega_m) THEN omega_m=0.273
 IF ~keyword_set(omega_b) THEN omega_b=0.046
 IF ~keyword_set(omega_l) THEN omega_l=0.727
 
-;;MAD Read in comoving distances 
-;readcol,zsample,z,chi,format='D'
 ;MAD Convert z array to comoving distance array
 chi=fltarr(n_elements(zarray))
 FOR i=0L,n_elements(zarray)-1 DO BEGIN
@@ -94,14 +90,14 @@ IF ~keyword_set(power_spec) THEN BEGIN
       numrem=(n_elements(revz) MOD 150)
       FOR i=0L,numloop-1 DO BEGIN
          indx=indgen(150)+(i*150)
-         matter_power_spec,paramfile,zarray[indx],h0=h0,omega_b=0.046,omega_dm=omega_m-omega_b,omega_l=omega_l
+         matter_power_spec,paramfile,zarray[indx],h0=h0,omega_b=omega_b,omega_dm=omega_m-omega_b,omega_l=omega_l
       ENDFOR
       IF (numrem NE 0) THEN BEGIN
          matter_power_spec,paramfile,zarray[(n_elements(zarray)-numrem):n_elements(zarray)-1],$
                            h0=h0,omega_b=omega_b,omega_dm=omega_m-omega_b,omega_l=omega_l
       ENDIF
    ENDIF ELSE BEGIN
-      matter_power_spec,paramfile,zarray,h0=h0,omega_b=0.046,omega_dm=omega_m-omega_b,omega_l=omega_l
+      matter_power_spec,paramfile,zarray,h0=h0,omega_b=omega_b,omega_dm=omega_m-omega_b,omega_l=omega_l
    ENDELSE
    combine_camb,'./',zarray,pspec,outfile='power_spec_camb.fits',maxell=3000.,chiin=chi*h0
 ENDIF ELSE BEGIN
@@ -145,7 +141,6 @@ FOR i=0L,n_elements(c_l)-1 DO Begin
 ENDFOR
 
 ;MAD Multiply in all the constants
-c=2.99792458e5
 mod_cl=(3./2.)*((h0*100.)^2.)*omega_m*(1./(c^2.))*c_l
 mod_ell=lvals
 
