@@ -1,0 +1,4 @@
+These files are the matter power spectra as a function of z used
+in DiPompeo et al. 2015.  The text files are the raw output from CAMB
+(using camb4idl), and power_spec_camb.fits is the combined file from
+combine_camb.pro.
