@@ -2,7 +2,8 @@
 ;  NAME:
 ;    rotate_map
 ;  PURPOSE:
-;    Rotate a HEALPix map in galactic latitude or longitude
+;    Rotate a HEALPix map in galactic longitude (can also do
+;    reflection in latitude)
 ;    
 ;  USE:
 ;   rotate_map,map,ang,rotmap,outfile='outfile.fits',/lat,/plot
