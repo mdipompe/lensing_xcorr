@@ -5,7 +5,8 @@
 ;    Get the mean value of a HEALPix map in annuli around some set of points
 ;
 ;  USE:
-;    bin_map,map,data,bincents,binned_vals,mask=mask,coords='G',binedges=binedges,region=region,outfile='out.txt',/loop
+;    bin_map,map,data,bincents,binned_vals,mask=mask,coords='G',binedges=binedges,
+;                region=region,outfile='out.txt',weights=weights/loop
 ;
 ;  INPUT:
 ;    map - HEALPix map to bin
@@ -19,6 +20,7 @@
 ;    region - mangle polygon (single) defining region of interest.
 ;             Speeds things up by excluding pixels/data outside this
 ;             region.  In Equatorial coordinates!
+;    weights - weight for each data point
 ;
 ;  KEYWORDS:        
 ;    coords - coordinates of data (E'Q'uatorial or 'G'alactic).
@@ -40,11 +42,14 @@
 ;
 ;  HISTORY:
 ;    6-15-15 - Written - MAD (UWyo)
-;    7-10-15 - Improved speed, especially for large datasets - MAD (UWyo)
+;    7-10-15 - Improved speed, especially for large datasets - MAD
+;              (UWyo)
+;    10-8-15 - Added weights option - MAD (UWyo)
 ;-
-PRO bin_map,map,data,bincents,binned_vals,mask=mask,coords=coords,binedges=binedges,region=region,outfile=outfile,loop=loop
+PRO bin_map,map,data,bincents,binned_vals,mask=mask,coords=coords,binedges=binedges,$
+            region=region,outfile=outfile,loop=loop,weights=weights
 
-st=code_timer()
+st=timer()
 
 ;MAD Set default coordinates
 IF ~keyword_set(coords) THEN coords='Q'
@@ -69,8 +74,24 @@ phi=data_l*(!dpi/180.)
 theta=(90-data_b)*(!dpi/180.)
 ang2pix_nest,nside,theta,phi,ipix
 ;Count number of data points in each pixel
-h=histogram(ipix,bin=1,min=0,max=max(pixnums))
-
+IF ~keyword_set(weights) THEN BEGIN
+   h=histogram(ipix,bin=1,min=0,max=max(pixnums))
+ENDIF ELSE BEGIN
+   ;MAD Note this weighted histogram
+   ;method stolen from Jeremy Bailins histogram_weight.pro
+   prehist=histogram(ipix, bin=1, min=0, max=max(pixnums), reverse_indices=ri)
+   histsize=size(prehist,/dimen)
+   h=replicate(weights[0],histsize)
+   FOR i=0L,n_elements(prehist)-1 DO BEGIN
+      IF prehist[i] GT 0 THEN BEGIN
+         q=ri[ri[i]:ri[i+1]-1]
+         h[i]=total(weight[q])
+      ENDIF ELSE BEGIN
+         h[i]=0
+      ENDELSE
+   ENDFOR
+ENDELSE
+   
 ;MAD Limit pixels to region of interest
 IF keyword_set(region) THEN BEGIN
    euler,pix_l,pix_b,pix_ra,pix_dec,2
