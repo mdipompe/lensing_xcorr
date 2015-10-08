@@ -1,4 +1,12 @@
 ;+
+;
+;***NOTE****
+;This was written when using Healpix 2.14.  It seems in newer versions
+;(e.g. 3.20), the /pessimistic flag in ud_grade.pro doesn't
+;behave as expected,so funny things can happen to pixels that should
+;be masked.  Check carefully, use old version of ud_grade.pro if possible.
+;***********
+;
 ;  NAME:
 ;    change_res
 ;  PURPOSE:
@@ -53,7 +61,7 @@ IF (newnside GT nsidein) THEN print,'CHANGE_RES: Increasing map resolution...'
 map[where(mask EQ 0)]=-99
 
 ud_grade,mask,newmask,nside_out=newnside,order_in='nested',$
-         order_out='nested',bad_data=0,/pessimistic
+         order_out='nested',bad_data=0.,/pessimistic
 
 IF keyword_set(outroot) THEN BEGIN
    outfile=outroot+'_mask_'+strtrim(round(newnside),2)+'.fits'
