@@ -44,7 +44,6 @@
 ;    6-15-15 - Written - MAD (UWyo)
 ;    7-10-15 - Improved speed, especially for large datasets - MAD
 ;              (UWyo)
-;    10-8-15 - Added weights option - MAD (UWyo)
 ;-
 PRO bin_map,map,data,bincents,binned_vals,mask=mask,coords=coords,binedges=binedges,$
             region=region,outfile=outfile,loop=loop,weights=weights
@@ -74,23 +73,7 @@ phi=data_l*(!dpi/180.)
 theta=(90-data_b)*(!dpi/180.)
 ang2pix_nest,nside,theta,phi,ipix
 ;Count number of data points in each pixel
-IF ~keyword_set(weights) THEN BEGIN
-   h=histogram(ipix,bin=1,min=0,max=max(pixnums))
-ENDIF ELSE BEGIN
-   ;MAD Note this weighted histogram
-   ;method stolen from Jeremy Bailins histogram_weight.pro
-   prehist=histogram(ipix, bin=1, min=0, max=max(pixnums), reverse_indices=ri)
-   histsize=size(prehist,/dimen)
-   h=replicate(weights[0],histsize)
-   FOR i=0L,n_elements(prehist)-1 DO BEGIN
-      IF prehist[i] GT 0 THEN BEGIN
-         q=ri[ri[i]:ri[i+1]-1]
-         h[i]=total(weight[q])
-      ENDIF ELSE BEGIN
-         h[i]=0
-      ENDELSE
-   ENDFOR
-ENDELSE
+;h=histogram(ipix,bin=1,min=0,max=max(pixnums))
    
 ;MAD Limit pixels to region of interest
 IF keyword_set(region) THEN BEGIN
@@ -109,10 +92,10 @@ ENDIF ELSE IF (~keyword_set(mask) AND ~keyword_set(region)) THEN BEGIN
    cnt=0
 ENDIF
 newmap=map
-IF (cnt NE 0) THEN remove,masked,pixnums,newmap,pix_l,pix_b,h
+IF (cnt NE 0) THEN remove,masked,pixnums,newmap,pix_l,pix_b;,h
 
 ;MAD Identify pixels with data points in them
-data_pix=where(h GT 0)
+;data_pix=where(h GT 0)
 
 ;MAD Set default bin edges
 IF ~keyword_set(binedges) THEN binedges=findgen((6.*3.)+1)*10.
@@ -134,14 +117,13 @@ IF keyword_set(loop) THEN step=10000. ELSE step=n_elements(pix_l)
 WHILE (k LT n_elements(pix_l)) DO BEGIN
    IF keyword_set(loop) THEN counter,k,n_elements(pix_l)
    tempindx=lindgen(step)+(k)
-   spherematch,pix_l[data_pix],pix_b[data_pix],pix_l[tempindx],pix_b[tempindx],max(binedges/60.),m1,m2,sep,maxmatch=0
+   spherematch,pix_l[ipix],pix_b[ipix],pix_l[tempindx],pix_b[tempindx],max(binedges/60.),m1,m2,sep,maxmatch=0
    IF (m1[0] NE -1) THEN BEGIN
       FOR i=0L,n_elements(binedges)-2 DO BEGIN
          xx=where(sep GE binedges[i]/60. AND sep LT binedges[i+1]/60.,cnt)
          IF (cnt NE 0) THEN BEGIN
-            uniqpix=data_pix[rem_dup(data_pix[m1[xx]])]
-            num[i]=num[i]+(n_elements(where(m1[xx] EQ m1[0]))*total(h[uniqpix]))
             total_vals[i]=total_vals[i]+total(newmap[tempindx[m2[xx]]])
+            num[i]=num[i]+n_elements(xx)
          ENDIF
       ENDFOR
    ENDIF
