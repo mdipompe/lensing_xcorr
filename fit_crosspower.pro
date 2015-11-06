@@ -138,7 +138,7 @@ oplot,mod_ell,mod_cl*sol[0]*1.e6,linestyle=1,thick=5
 
 IF keyword_set(plotout) THEN PS_end,/png
 
-print,'Chi^2 of best fit bias is ' + strtrim(minchi,2)
+print,'Chi^2 of best fit bias is ' + strtrim(minchi2,2)
 print,'(error on b is based on delta chi of ',strtrim(dchi_b,2),')'
 print,'The best fit bias value is: '
 print,strtrim(sol,2)+' +/- '+strtrim(b_err,2)
