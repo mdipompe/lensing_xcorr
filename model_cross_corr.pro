@@ -34,6 +34,7 @@
 ;    omega_b - omega_baryon, defaults to 0.046
 ;    outfile - if supplied, writes model power out to text file
 ;    plotfile - if supplied, makes a plot of the model
+;    bz - coefficients of b(z) model, of the form b(z) = bz[0] + bz[1](1+z)^2
 ;
 ;  KEYWORDS:
 ;    
@@ -49,12 +50,14 @@
 ;
 ;  HISTORY:
 ;    11-7-14 - Written - MAD (UWyo)
-;    8-21-15 - If power spec not supplied, calls CAMB4IDL to get it - MAD (UWyo)
+;    8-21-15 - If power spec not supplied, calls CAMB4IDL to get it -
+;              MAD (UWyo)
+;    11-6-15 - Added bz option - MAD (Dartmouth)
 ;-
 PRO model_cross_corr,mod_ell,mod_cl,power_spec=power_spec,dndz=dndz,zarray=zarray,$
                      paramfile=paramfile,$
                      omega_m=omega_m,omega_b=omega_b,omega_l=omega_l,h0=h0,$
-                     outfile=outfile,plotfile=plotfile
+                     outfile=outfile,plotfile=plotfile,bz=bz
 
 ;MAD If output file already exists, don't run just read it in
 IF ~keyword_set(outfile) THEN check='' ELSE check=file_search(outfile)
@@ -138,7 +141,8 @@ fit_dndz,zdist,zarray,dndz
 c_l=fltarr(n_elements(lvals))
 FOR i=0L,n_elements(c_l)-1 DO Begin
    xx=where(pkl EQ lvals[i])
-   fz=((d_cmb[0]-chi)/(d_cmb[0]))*((1.+zarray)/chi)*dndz*pk[xx]
+   IF ~keyword_set(bz) THEN fz=((d_cmb[0]-chi)/(d_cmb[0]))*((1.+zarray)/chi)*dndz*pk[xx] ELSE $
+      fz=((d_cmb[0]-chi)/(d_cmb[0]))*((1.+zarray)/chi)*dndz*pk[xx](bz[0]+bz[1]*(1.+zarray)^2)
    c_l[i]=int_tabulated(zarray,fz,/double)
 ENDFOR
 

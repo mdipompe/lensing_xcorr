@@ -21,6 +21,10 @@
 ;             containing covariance matrix).  If not set, just uses variance.
 ;    plotout - if provided, outputs hardcopy of plot. string name of file
 ;
+;  KEYWORDS:
+;    bz - if set assumes you input a model with b(z) and want to
+;         rescale it (b_0).  Really just changes what is printed to screen
+;
 ;  OUTPUT:
 ;    bias - the best fit bias
 ;    berr - error on the bias
@@ -30,10 +34,12 @@
 ;
 ;  HISTORY:
 ;    11-11-14 - Written - MAD (UWyo)
+;    11-6-15 - Added minchi2 as output, b(z) option - MAD (Dartmouth)
 ;-
 
-PRO fit_crosspower,cl,ell,min_l,max_l,mod_ell,mod_cl,bias,berr,err=err,covar=covar,plotout=plotout,$
-                   minchi2=minchi2
+PRO fit_crosspower,cl,ell,min_l,max_l,mod_ell,mod_cl,bias,berr,$
+                   err=err,covar=covar,plotout=plotout,$
+                   minchi2=minchi2,bz=bz
 
 IF (N_Params() LT 6) THEN message,'Syntax - fit_crosspower,cl,ell,min_l,max_l,''model.txt'',bias,[errors=errors,covar=covar,plotout=''plotfile.png'']'
 
@@ -138,12 +144,21 @@ oplot,mod_ell,mod_cl*sol[0]*1.e6,linestyle=1,thick=5
 
 IF keyword_set(plotout) THEN PS_end,/png
 
-print,'Chi^2 of best fit bias is ' + strtrim(minchi2,2)
-print,'(error on b is based on delta chi of ',strtrim(dchi_b,2),')'
-print,'The best fit bias value is: '
-print,strtrim(sol,2)+' +/- '+strtrim(b_err,2)
-print,'(over the range l=',strtrim(min_l,2),'-',strtrim(max_l,2),')'
+IF ~keyword_set(bz) THEN BEGIN
+   print,'Chi^2 of best fit bias is ' + strtrim(minchi2,2)
+   print,'(error on b is based on delta chi of ',strtrim(dchi_b,2),')'
+   print,'The best fit bias value is: '
+   print,strtrim(sol,2)+' +/- '+strtrim(b_err,2)
+   print,'(over the range l=',strtrim(min_l,2),'-',strtrim(max_l,2),')'
+ENDIF ELSE BEGIN
+   print,'Chi^2 of best fit b_0 is ' + strtrim(minchi2,2)
+   print,'(error on b_0 is based on delta chi of ',strtrim(dchi_b,2),')'
+   print,'The best fit b_0 value is: '
+   print,strtrim(sol,2)+' +/- '+strtrim(b_err,2)
+   print,'(over the range l=',strtrim(min_l,2),'-',strtrim(max_l,2),')'
+ENDELSE
 
+   
 bias=sol
 berr=b_err
 
