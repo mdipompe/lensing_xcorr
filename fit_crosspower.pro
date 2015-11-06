@@ -97,7 +97,7 @@ ENDFOR
 minchi=where(chisq EQ min(chisq))
 sol=b_guess[where(chisq EQ min(chisq))]
 
-minchi2=minchi
+minchi2=chisq[minchi]
 
 ;MAD Find error on best fit bias, using delta chi^2 = 1
 chi1=chisq[0:minchi]-min(chisq)
