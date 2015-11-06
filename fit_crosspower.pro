@@ -25,11 +25,15 @@
 ;    bias - the best fit bias
 ;    berr - error on the bias
 ;
+;  OPTIONAL OUTPUT
+;    minchi2 - the chi^2 of the best fit bias
+;
 ;  HISTORY:
 ;    11-11-14 - Written - MAD (UWyo)
 ;-
 
-PRO fit_crosspower,cl,ell,min_l,max_l,mod_ell,mod_cl,bias,berr,err=err,covar=covar,plotout=plotout
+PRO fit_crosspower,cl,ell,min_l,max_l,mod_ell,mod_cl,bias,berr,err=err,covar=covar,plotout=plotout,$
+                   minchi2=minchi2
 
 IF (N_Params() LT 6) THEN message,'Syntax - fit_crosspower,cl,ell,min_l,max_l,''model.txt'',bias,[errors=errors,covar=covar,plotout=''plotfile.png'']'
 
@@ -93,6 +97,8 @@ ENDFOR
 minchi=where(chisq EQ min(chisq))
 sol=b_guess[where(chisq EQ min(chisq))]
 
+minchi2=minchi
+
 ;MAD Find error on best fit bias, using delta chi^2 = 1
 chi1=chisq[0:minchi]-min(chisq)
 chi2=chisq[minchi:n_elements(chisq)-1]-min(chisq)
@@ -132,7 +138,7 @@ oplot,mod_ell,mod_cl*sol[0]*1.e6,linestyle=1,thick=5
 
 IF keyword_set(plotout) THEN PS_end,/png
 
-
+print,'Chi^2 of best fit bias is ' + strtrim(minchi,2)
 print,'(error on b is based on delta chi of ',strtrim(dchi_b,2),')'
 print,'The best fit bias value is: '
 print,strtrim(sol,2)+' +/- '+strtrim(b_err,2)
