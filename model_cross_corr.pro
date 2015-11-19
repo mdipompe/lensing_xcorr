@@ -142,7 +142,7 @@ c_l=fltarr(n_elements(lvals))
 FOR i=0L,n_elements(c_l)-1 DO Begin
    xx=where(pkl EQ lvals[i])
    IF ~keyword_set(bz) THEN fz=((d_cmb[0]-chi)/(d_cmb[0]))*((1.+zarray)/chi)*dndz*pk[xx] ELSE $
-      fz=((d_cmb[0]-chi)/(d_cmb[0]))*((1.+zarray)/chi)*dndz*pk[xx](bz[0]+bz[1]*(1.+zarray)^2)
+      fz=((d_cmb[0]-chi)/(d_cmb[0]))*((1.+zarray)/chi)*dndz*pk[xx]*(bz[0]+bz[1]*(1.+zarray)^2)
    c_l[i]=int_tabulated(zarray,fz,/double)
 ENDFOR
 
