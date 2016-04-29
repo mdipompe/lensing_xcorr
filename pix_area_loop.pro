@@ -113,7 +113,7 @@ FOR i=0L,n_elements(pixels)-1 DO BEGIN
       ENDIF
    ENDELSE
 et=systime(1)
-print,'Loop took '+strtrim((et-st)*60.,2)+' minutes to run.'
+print,'Loop took '+strtrim((et-st),2)+' seconds to run.'
 ENDFOR
 
 ;MAD Write area map in healpix format, if wanted
