@@ -118,7 +118,7 @@ b_err=(abs(sol[0]-b_err1)+abs(sol[0]-b_err2))*(0.5)
 dchi_b=(chi1[xx]+chi2[yy])*0.5
 
 ;MAD Initialize plot hardcopy if needed
-IF keyword_set(plotout) THEN PS_start,filename=plotout,xsize=11,ysize=9
+IF keyword_set(plotout) THEN PS_start,filename=plotout;,xsize=11,ysize=9
 
 ;MAD Plot the results
 ytit=textoidl('C_{l}^{\kappa q} \times 10^{6}')
