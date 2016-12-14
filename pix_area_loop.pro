@@ -29,6 +29,10 @@
 ;        calculation.  Defaults to 100.
 ;    outfile - filename for output, (fits map)
 ;    scheme - pixelization scheme of the mask (defaults to 6s)
+;    seed - random seed passed to ransack
+;    firstpix - index of first large pixel to start from (enables you
+;               to restart where you left off in the even of crash,
+;               using tmp_area_map.fits temporary file
 ;
 ;  OUTPUT:
 ;    areamap - HEALPix map containing area of each pixel
@@ -38,11 +42,25 @@
 ;
 ;  HISTORY:
 ;    5-20-15 - Written - MAD (UWyo)
+;    12-2-16 - Added seed keyword - MAD (Dartmouth)
+;   12-14-16 - Added temporary output every 100 steps to save time
+;              after crash, along with firstpix optional input - MAD (Dartmouth) 
 ;-
-PRO pix_area_loop,pixels,mask,nside,area_map,N=N,outfile=outfile,scheme=scheme
+PRO pix_area_loop,pixels,mask,nside,area_map,N=N,outfile=outfile,scheme=scheme,seed=seed,$
+                  firstpix=firstpix
 
+;MAD Decide if you're restarting from somewhere in the middle
+IF (n_elements(firstpix) NE 0) THEN BEGIN
+   read_fits_map,'tmp_area_map.fits',area_map
+   j=long(firstpix)
+ENDIF
+IF (n_elements(firstpix) EQ 0) THEN j=0L
+  
 ;MAD Set pixelization scheme
 IF ~keyword_set(scheme) THEN scheme='6s'
+
+;MAD Set random seed
+IF ~keyword_set(seed) THEN seed=616
 
 ;MAD Determine nside of larger pixels
 nside_large=SQRT(n_elements(pixels)/12.)
@@ -68,7 +86,7 @@ IF ~keyword_set(N) THEN N=100.
 N_large=ceil((N/pixarea)*pixarea_large)
 
 ;MAD Loop over low resolution pixels
-FOR i=0L,n_elements(pixels)-1 DO BEGIN
+FOR i=j,n_elements(pixels)-1 DO BEGIN
    st=systime(1)
    print,'Working on '+strtrim(i+1,2)+' of ',strtrim(n_elements(pixels),2)
 
@@ -78,7 +96,7 @@ FOR i=0L,n_elements(pixels)-1 DO BEGIN
       usemask=mask[m1]
       ;MAD Write temp polygon for ransack to use
       write_mangle_polygons,'tmp.ply',pixels[i]
-      ransack,N_large,'tmp.ply','tmp.rsack',seed=616
+      ransack,N_large,'tmp.ply','tmp.rsack',seed=seed
 
       ;MAD Apply mask to ransacked data, calculate area used
       apply_poly_mask,'tmp.rsack',usemask,rin,rout,scheme=scheme,coords='Q'
@@ -112,9 +130,18 @@ FOR i=0L,n_elements(pixels)-1 DO BEGIN
          area_map=area_map+area_tmp
       ENDIF
    ENDELSE
-et=systime(1)
-print,'Loop took '+strtrim((et-st),2)+' seconds to run.'
+   ;MAD Since this is slow, every 100
+   ;large pixels write out the current
+   ;area map in case there's a crash
+   check=(i mod 100)
+   IF (check EQ 0 AND i NE 0) THEN write_fits_map,'tmp_area_map.fits',area_map,['Up through large pixel ' + strtrim(i,2)],/nest
+   et=systime(1)
+   print,'Loop took '+strtrim((et-st),2)+' seconds to run.'
 ENDFOR
+
+;MAD Remove temporary area file
+cmd=['rm','tmp_area_map.fits']
+spawn,cmd,/noshell
 
 ;MAD Write area map in healpix format, if wanted
 IF keyword_set(outfile) THEN write_fits_map,outfile,area_map,/nest

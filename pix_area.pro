@@ -26,7 +26,7 @@ PRO pix_area,nside,inmask,outmask,areamap,outmap=outmap
 IF ~keyword_set(outmap) THEN check='' ELSE check=file_search(outmap)
 IF (check NE '') THEN BEGIN
    print,'PIX_AREA: Output file already exists, reading in and returning...'
-   read_fits_map,outfile,areamap
+   read_fits_map,outmap,areamap
    return
 ENDIF
 
