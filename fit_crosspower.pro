@@ -35,11 +35,11 @@
 ;  HISTORY:
 ;    11-11-14 - Written - MAD (UWyo)
 ;    11-6-15 - Added minchi2 as output, b(z) option - MAD (Dartmouth)
+;    2-12-17 - General improvements, added silent option - MAD (Dartmouth)
 ;-
-
-PRO fit_crosspower,cl,ell,min_l,max_l,mod_ell,mod_cl,bias,berr,$
+PRO fit_crosspower,cl_in,ell_in,min_l,max_l,mod_ell,mod_cl,bias,berr,$
                    err=err,covar=covar,plotout=plotout,$
-                   minchi2=minchi2,bz=bz
+                   minchi2=minchi2,bz=bz,silent=silent
 
 IF (N_Params() LT 6) THEN message,'Syntax - fit_crosspower,cl,ell,min_l,max_l,''model.txt'',bias,[errors=errors,covar=covar,plotout=''plotfile.png'']'
 
@@ -57,14 +57,14 @@ IF ~keyword_set(err) then err=cl*0.000001
 IF keyword_set(covar) THEN BEGIN
    check=size(covar)
    IF ((check[0] EQ 0) AND (check[1] EQ 7)) THEN $
-      read_square_matrix,n_elements(ell),covar,C ELSE C=covar
+      C=read_matrix(covar) ELSE C=covar
 ENDIF
 
 ;MAD Limit to desired l range
-xx=where((ell GE min_l) AND (ell LE max_l))
-ell=ell[xx]
-cl=cl[xx]
-err=err[xx]
+xx=where((ell_in GE min_l) AND (ell_in LE max_l))
+ell=ell_in[xx]
+cl=cl_in[xx]
+errs=err[xx]
 IF keyword_set(covar) THEN BEGIN
    C=C[*,xx]
    C=C[xx,*]
@@ -76,7 +76,7 @@ IF ~keyword_set(covar) THEN BEGIN
    C=dblarr(n_elements(ell),n_elements(ell))
    FOR i=0,n_elements(C[*,0])-1 DO BEGIN
       FOR j=0,n_elements(C[0,*])-1 DO BEGIN
-         IF (i EQ j) THEN C[i,j]=err[i]^2.
+         IF (i EQ j) THEN C[i,j]=errs[i]^2.
       ENDFOR
    ENDFOR
 ENDIF
@@ -138,24 +138,28 @@ axis,(2.*!dpi/6.)*(180./!dpi),2.,xaxis=1,/xlog,xra=[(2.*!dpi/6.)*(180/!dpi),(2.*
   xsty=1,xtit=xtit2,xticklen=0.02,xcharsize=1.8,charthick=1.8,xthick=8
 
 oplot,ell,cl*(1.e6),psym=8,color=cgcolor('dark grey'),symsize=1.5
-oploterror,ell,cl*(1.e6),err*(1.e6),psym=3,color=cgcolor('dark grey')
+oploterror,ell,cl*(1.e6),errs*(1.e6),psym=3,color=cgcolor('dark grey')
 oplot,mod_ell,mod_cl*sol[0]*1.e6,linestyle=1,thick=5
 
 
 IF keyword_set(plotout) THEN PS_end,/png
 
 IF ~keyword_set(bz) THEN BEGIN
-   print,'Chi^2 of best fit bias is ' + strtrim(minchi2,2)
-   print,'(error on b is based on delta chi of ',strtrim(dchi_b,2),')'
-   print,'The best fit bias value is: '
-   print,strtrim(sol,2)+' +/- '+strtrim(b_err,2)
-   print,'(over the range l=',strtrim(min_l,2),'-',strtrim(max_l,2),')'
+   IF ~keyword_set(silent) THEN BEGIN
+      print,'Chi^2 of best fit bias is ' + strtrim(minchi2,2)
+      print,'(error on b is based on delta chi of ',strtrim(dchi_b,2),')'
+      print,'The best fit bias value is: '
+      print,strtrim(sol,2)+' +/- '+strtrim(b_err,2)
+      print,'(over the range l=',strtrim(min_l,2),'-',strtrim(max_l,2),')'
+   ENDIF
 ENDIF ELSE BEGIN
-   print,'Chi^2 of best fit b_0 is ' + strtrim(minchi2,2)
-   print,'(error on b_0 is based on delta chi of ',strtrim(dchi_b,2),')'
-   print,'The best fit b_0 value is: '
-   print,strtrim(sol,2)+' +/- '+strtrim(b_err,2)
-   print,'(over the range l=',strtrim(min_l,2),'-',strtrim(max_l,2),')'
+   IF ~keyword_set(silent) THEN BEGIN
+      print,'Chi^2 of best fit b_0 is ' + strtrim(minchi2,2)
+      print,'(error on b_0 is based on delta chi of ',strtrim(dchi_b,2),')'
+      print,'The best fit b_0 value is: '
+      print,strtrim(sol,2)+' +/- '+strtrim(b_err,2)
+      print,'(over the range l=',strtrim(min_l,2),'-',strtrim(max_l,2),')'
+   ENDIF
 ENDELSE
 
    
