@@ -113,8 +113,8 @@ FOR i=j,n_elements(pixels)-1 DO BEGIN
 
    ;MAD Use hack above - set area of any small pixel outside
    ;MAD large pixel boundry to 0.
-      xx=where(nums NE i)
-      area_tmp[xx]=0.
+      xx=where(nums NE i,cnt)
+      IF (cnt NE 0) THEN area_tmp[xx]=0.
 
    ;MAD Add areas to final output area map
    IF (n_elements(area_map) EQ 0) THEN BEGIN
