@@ -22,33 +22,38 @@
 ;
 ;  OUTPUT:
 ;    stack1 - the mean value of map 1 in each bin
-;    stack2 - the mean value of map 2 at the location of map 1 in each bin
+;    stack2 - the mean value of map 2 at the location of map 1 in each
+;             bin
+;    err1 - the standard deviation of map1 values in bins
 ;    plot
 ;
 ;  HISTORY:
 ;    11-16-14 - Written - MAD (UWyo)
+;     2-20-17 - Minor improvements, added output for scatter in map1 bins
 ;-
-PRO stack,map1,map2,mask,new1,new2,outfile=outfile,bin_edges=bin_edges,errs=errs
+PRO stack,map1,map2,mask,new1,new2,err1,outfile=outfile,bin_edges=bin_edges,uperrs=uperrs,lowerrs=lowerrs
 
 ;MAD Define filled circle for plot
 circsym
 
 ;MAD Mask pixels
-map1=map1[where(mask EQ 1)]
-map2=map2[where(mask EQ 1)]
+map1_good=map1[where(mask EQ 1)]
+map2_good=map2[where(mask EQ 1)]
 
 ;MAD Bin map1, stack locations in map2.  Use standard deviations as errors
 IF ~keyword_set(bin_edges) THEN $
    bin_edges=[-0.5,-0.27,-0.19,-0.12,-0.07,-0.01,0.04,0.1,0.17,0.27,0.5]
 
 FOR i=0L,n_elements(bin_edges)-2 DO BEGIN
-   xx=where((map1 GT bin_edges[i]) AND (map1 LT bin_edges[i+1]))
-   IF (n_elements(new2) EQ 0) THEN new2=mean(map2[xx]) ELSE new2=[new2,mean(map2[xx])]
-   IF (n_elements(signew1) EQ 0) THEN signew2=stddev(map2[xx]) ELSE signew2=[signew2,stddev(map2[xx])]
+   xx=where((map1_good GT bin_edges[i]) AND (map1_good LT bin_edges[i+1]))
+   IF (n_elements(new2) EQ 0) THEN new2=mean(map2_good[xx]) ELSE new2=[new2,mean(map2_good[xx])]
+   IF (n_elements(signew1) EQ 0) THEN signew2=stddev(map2_good[xx]) ELSE signew2=[signew2,stddev(map2_good[xx])]
 
-   IF (n_elements(new1) EQ 0) THEN new1=mean(map1[xx]) ELSE new1=[new1,mean(map1[xx])]
-   IF (n_elements(signew1) EQ 0) THEN signew1=stddev(map1[xx]) ELSE signew1=[signew1,stddev(map1[xx])]
+   IF (n_elements(new1) EQ 0) THEN new1=mean(map1_good[xx]) ELSE new1=[new1,mean(map1_good[xx])]
+   IF (n_elements(signew1) EQ 0) THEN signew1=stddev(map1_good[xx]) ELSE signew1=[signew1,stddev(map1_good[xx])]
 ENDFOR
+
+err1=signew1
 
 ;MAD Make a plot
 IF keyword_set(outfile) THEN BEGIN
@@ -57,22 +62,22 @@ IF keyword_set(outfile) THEN BEGIN
    xtit=textoidl('\delta')
    ytit=textoidl('\kappa')
 
-plot,[0],[0],psym=0,/nodata,$
-     xtit=xtit,ytit=ytit,xra=[-0.49,0.49],yra=[-0.014,0.02],xsty=1,ysty=1,$
-     thick=5,xthick=8,ythick=8,$
-     charthick=1.0,xcharsize=1.8,ycharsize=1.8,$
-     position=[0.19,0.15,0.95,0.95],$
-     ytickname=['-0.01',' ','0.00',' ','0.01',' ','0.02']
+   plot,[0],[0],psym=0,/nodata,$
+        xtit=xtit,ytit=ytit,xra=[-0.49,0.49],yra=[-0.014,0.02],xsty=1,ysty=1,$
+        thick=5,xthick=8,ythick=8,$
+        charthick=1.0,xcharsize=1.8,ycharsize=1.8,$
+        position=[0.19,0.15,0.95,0.95],$
+        ytickname=['-0.01',' ','0.00',' ','0.01',' ','0.02']
 ENDIF ELSE BEGIN
-xtit=textoidl('\delta')
-ytit=textoidl('\kappa')
+   xtit=textoidl('\delta')
+   ytit=textoidl('\kappa')
 
-plot,[0],[0],psym=0,/nodata,$
-     xtit=xtit,ytit=ytit,xra=[-0.49,0.49],yra=[-0.014,0.02],xsty=1,ysty=1,$
-     thick=3,xthick=4,ythick=4,$
-     charthick=1.0,xcharsize=1.3,ycharsize=1.3,$
-     position=[0.19,0.15,0.95,0.95],$
-     ytickname=['-0.01',' ','0.00',' ','0.01',' ','0.02']
+   plot,[0],[0],psym=0,/nodata,$
+        xtit=xtit,ytit=ytit,xra=[-0.49,0.49],yra=[-0.014,0.02],xsty=1,ysty=1,$
+        thick=3,xthick=4,ythick=4,$
+        charthick=1.0,xcharsize=1.3,ycharsize=1.3,$
+        position=[0.19,0.15,0.95,0.95],$
+        ytickname=['-0.01',' ','0.00',' ','0.01',' ','0.02']
 ENDELSE
 
 
