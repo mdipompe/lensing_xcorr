@@ -96,7 +96,7 @@ PRO fit_rotations,ell,cl,errs,mod_ell,mod_cl,b,n=n,minscale=minscale,maxscale=ma
      openw,lun,outfile,/get_lun
      printf,lun,';b       b_err',format='(A)'
      FOR i=0L,n-1 DO $
-        printf,strtrim(b[i],2) + '     ' + strtrim(b_err[i],2),format='(A)'
+        printf,lun,strtrim(b[i],2) + '     ' + strtrim(b_err[i],2),format='(A)'
      free_lun,lun
   ENDIF
   
