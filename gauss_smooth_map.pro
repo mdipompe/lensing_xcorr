@@ -37,11 +37,12 @@ IF (check NE '') THEN BEGIN
 ENDIF
 
 ;MAD Set missingval to 0 if not supplied, mask data
-IF ~keyword_set(missingval) THEN missingval=0
-map[where(mask EQ 0)]=missingval
+IF ~keyword_set(missingvals) THEN missingvals=0
+newmap=map
+newmap[where(mask EQ 0)]=missingvals
 
 ;MAD Smooth the map
-ismoothing,map,outmap,fwhm_arcmin=fwhm,/nest
+ismoothing,newmap,outmap,fwhm_arcmin=fwhm,/nest
 
 ;MAD Plot if needed
 IF keyword_set(plotmap) THEN $
