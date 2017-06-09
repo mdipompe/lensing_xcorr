@@ -18,6 +18,7 @@
 ;               appended with _raw.txt, etc).  Defaults to 'cl'
 ;    bins_per_dex - integer number of bins per dex (3,4, or 5).
 ;                   Defualts to 5.
+;    maxl - the maximum ell value to use in harmonic transform calculation
 ;
 ;    
 ;  OUTPUT:
@@ -26,10 +27,12 @@
 ;
 ;  HISTORY:
 ;    11-8-14 - Written - MAD (UWyo)
+;     6-9-17 - Added maxl option - MAD (Dartmouth)
 ;-
-PRO cross_corr,map1,map2,mask,cl,ell,bins=bins,outroot=outroot
+PRO cross_corr,map1,map2,mask,cl,ell,bins=bins,outroot=outroot,maxl=maxl
 
 IF ~keyword_set(bins) THEN bins=5
+IF ~keyword_set(maxl) THEN maxl=3000
 
 ;MAD If output file already exists, don't run just read it in
 IF ~keyword_set(outroot) THEN check='' ELSE check=file_search(outroot+'_binned_'+strtrim(bins,2)+'.txt')
@@ -60,7 +63,7 @@ factor=n_elements(where(mask EQ 1))*(1./n_elements(mask))
 
 
 ;MAD Run ianafast to get cross-correlation
-ianafast,map1,crosscorr,map2_in=map2,maskfile=mask,/nested,nlmax=3000
+ianafast,map1,crosscorr,map2_in=map2,maskfile=mask,/nested,nlmax=maxl
 crosscorr=crosscorr*(1./factor)
 
 ;MAD If needed, write out raw c_l values
@@ -78,7 +81,7 @@ IF (bins EQ 4) THEN step=0.25
 IF (bins EQ 5) THEN step=0.2
 power=1.
 bin_edge=0
-WHILE (max(bin_edge) LT 3000.) DO BEGIN
+WHILE (max(bin_edge) LT maxl) DO BEGIN
   IF (power EQ 1.) THEN bin_edge=10.^power ELSE bin_edge=[bin_edge,10.^power]
   power=power+step
 ENDWHILE
