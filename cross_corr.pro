@@ -18,7 +18,8 @@
 ;               appended with _raw.txt, etc).  Defaults to 'cl'
 ;    bins_per_dex - integer number of bins per dex (3,4, or 5).
 ;                   Defualts to 5.
-;    maxl - the maximum ell value to use in harmonic transform calculation
+;    maxl - the maximum ell value to use in harmonic transform
+;           calculation (must be integer type!)
 ;
 ;    
 ;  OUTPUT:
