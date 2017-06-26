@@ -66,7 +66,7 @@ FOR i=0L,n_elements(rot_maps)-1 DO BEGIN
    ;MAD Read binned cls, write out to single file
    readcol,'cl_binned_tmp.txt',binnedell,binnedcl,format='D'
    FOR j=0L,n_elements(binnedell)-1 DO BEGIN
-      printf,lun,bin-edges[j],binnedell[j],widths[j],binnedcl[j],i,format='(F,1x,F,1x,F,1x,E,1x,I)'
+      printf,lun,bin_edges[j],binnedell[j],widths[j],binnedcl[j],i,format='(F,1x,F,1x,F,1x,E,1x,I)'
    ENDFOR
    cmd=['rm','raw_cl_tmp.txt','cl_binned_tmp.txt']
    spawn,cmd,/noshell
