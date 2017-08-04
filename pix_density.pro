@@ -5,7 +5,7 @@
 ;    Calculate the relative object density in HEALPix pixels
 ;
 ;  USE:
-;    pix_density,data,areas,mask,delta,N=N,rho=rho,outroot='outroot'
+;    pix_density,data,areas,mask,delta,N=N,rho=rho,coords=coords,outroot='outroot'
 ;
 ;  INPUT:
 ;    data - Data structure with at least ra and dec tags
@@ -14,7 +14,9 @@
 ;  OPTIONAL INPUT
 ;    outroot - if set, will write out maps for number, density, and
 ;              relative density of each pixels
-;    
+;    coords - Coordinate system of input maps: "G"alactic, "E" or
+;             "Q"uatorial. Defaults to Galactic
+;
 ;  OUTPUT:
 ;    delta - HEALPix map of relative density in each pixel
 ;
@@ -24,8 +26,9 @@
 ;
 ;  HISTORY:
 ;    11-16-14 - Written - MAD (UWyo)
+;     13-7-17 - Added coords kewyord - MAD (Dartmouth)
 ;-
-PRO pix_density,data,areas,mask,delta,N=N,rho=rho,outroot=outroot
+PRO pix_density,data,areas,mask,delta,N=N,rho=rho,coords=coords,outroot=outroot
 
 ;MAD If output file already exists, don't run just read it in
 IF ~keyword_set(outroot) THEN check='' ELSE check=file_search(outroot+'_delta.fits')
@@ -37,6 +40,9 @@ IF (check NE '') THEN BEGIN
    return
 ENDIF
 
+;MAD Set default coordinate system
+IF ~keyword_set(coords) THEN coords='G'
+
 ;MAD Set HEALPix params based input maps
 npix=n_elements(areas)
 nside=SQRT(npix/12.)
@@ -44,10 +50,15 @@ nside=SQRT(npix/12.)
 ;MAD Get used pixels from mask
 use_pix=where(mask EQ 1)
 
-;MAD Convert to Galactic coords, get phi and theta on sphere
-euler,data.ra,data.dec,galra,galdec,1
-phi=galra*(!dpi/180.)
-theta=(90-galdec)*(!dpi/180.)
+;MAD Convert coords if needed, get phi and theta on sphere
+IF (coords EQ 'G') THEN BEGIN
+   euler,data.ra,data.dec,long,lat,1
+ENDIF ELSE IF (coords EQ 'E' OR coords EQ 'Q') THEN BEGIN
+   long=data.ra
+   lat=data.dec
+ENDIF
+phi=long*(!dpi/180.)
+theta=(90-lat)*(!dpi/180.)
 
 ;MAD Find which pixel each point is in
 ang2pix_nest,nside,theta,phi,ipix
