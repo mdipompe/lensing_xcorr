@@ -68,6 +68,11 @@ FOR i=0L,n_elements(rot_maps)-1 DO BEGIN
    FOR j=0L,n_elements(binnedell)-1 DO BEGIN
       printf,lun,bin_edges[j],binnedell[j],widths[j],binnedcl[j],i,format='(F,1x,F,1x,F,1x,E,1x,I)'
    ENDFOR
+   ;The free lun here is a hack; for some reason, if you've already 
+   ;opened a file with /get_lun, if you then read in many (>28) files with
+   ;readcol, the luns will all end up taken and it'll crash. This forces
+   ;one to always be free for readcol
+   free_lun,110
    cmd=['rm','raw_cl_tmp.txt','cl_binned_tmp.txt']
    spawn,cmd,/noshell
 ENDFOR
